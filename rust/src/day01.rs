@@ -1,4 +1,4 @@
-pub(crate) struct Day01 {
+pub struct Day01 {
     parsed: Vec<Rotation>,
 }
 
@@ -25,7 +25,7 @@ fn parse_line(line: &str) -> Rotation {
     }
 }
 
-fn spin(rot: &Rotation, pos: u64) -> u64 {
+const fn spin(rot: &Rotation, pos: u64) -> u64 {
     let pos = match rot.0 {
         Dir::R => pos + rot.1,
         Dir::L => pos + (100 - (rot.1 % 100)),
@@ -50,9 +50,9 @@ fn part2(data: &[Rotation]) -> u64 {
     let mut pos = 50;
     let mut count = 0;
     for rot in data {
-        // Possibly slow, but the compiler probably makes it fast :)
+        let rotation = &Rotation(rot.0, 1);
         for _ in 0..rot.1 {
-            pos = spin(&Rotation(rot.0, 1), pos);
+            pos = spin(rotation, pos);
             if pos == 0 {
                 count += 1;
             }
