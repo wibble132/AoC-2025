@@ -26,6 +26,20 @@ fn parse_line(line: &str) -> Rotation {
 }
 
 const fn spin(rot: &Rotation, pos: u64) -> u64 {
+    // Optimise single steps for part 2
+    if rot.1 == 1 {
+        return match rot.0 {
+            Dir::R => match rot.1 {
+                99 => 0,
+                _ => pos + 1,
+            },
+            Dir::L => match rot.1 {
+                0 => 99,
+                _ => pos - 1,
+            },
+        };
+    }
+
     let pos = match rot.0 {
         Dir::R => pos + rot.1,
         Dir::L => pos + (100 - (rot.1 % 100)),
