@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic)]
+
 mod day01;
 
 pub use day01::Day01;
@@ -19,16 +21,19 @@ pub fn run_day<D: Day>() {
 
     println!("Part 1: {p1}");
     println!("Part 2: {p2}");
+    println!();
 }
 
+#[must_use] 
 pub fn read_input_file<D: Day>() -> String {
     let number = D::DAY_NUMBER;
     let path = format!("../inputs/day{number:02}.txt");
     std::fs::read_to_string(&path).expect(&format!("Unable to find input at {path}"))
 }
 
+#[must_use] 
 pub fn evaluate_day<D: Day>(input: &str) -> (u64, u64) {
-    let day = D::parse(&input);
+    let day = D::parse(input);
     let p1 = day.part1();
     let p2 = day.part2();
     (p1, p2)

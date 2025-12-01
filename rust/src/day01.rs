@@ -2,79 +2,6 @@ pub struct Day01 {
     parsed: Vec<Rotation>,
 }
 
-#[derive(Clone, Copy)]
-enum Dir {
-    L,
-    R,
-}
-
-struct Rotation(Dir, u64);
-
-fn parse(input: &str) -> Vec<Rotation> {
-    input.lines().map(parse_line).collect::<Vec<_>>()
-}
-
-fn parse_line(line: &str) -> Rotation {
-    let mut chars = line.chars();
-    let dir = chars.next().unwrap();
-    let number = chars.as_str().parse::<u64>().unwrap();
-    match dir {
-        'L' => Rotation(Dir::L, number),
-        'R' => Rotation(Dir::R, number),
-        _ => unreachable!(),
-    }
-}
-
-const fn spin(rot: &Rotation, pos: u64) -> u64 {
-    // Optimise single steps for part 2
-    if rot.1 == 1 {
-        return match rot.0 {
-            Dir::R => match rot.1 {
-                99 => 0,
-                _ => pos + 1,
-            },
-            Dir::L => match rot.1 {
-                0 => 99,
-                _ => pos - 1,
-            },
-        };
-    }
-
-    let pos = match rot.0 {
-        Dir::R => pos + rot.1,
-        Dir::L => pos + (100 - (rot.1 % 100)),
-    };
-
-    pos % 100
-}
-
-fn part1(data: &[Rotation]) -> u64 {
-    let mut pos = 50;
-    let mut count = 0;
-    for rot in data {
-        pos = spin(rot, pos);
-        if pos == 0 {
-            count += 1;
-        }
-    }
-    count
-}
-
-fn part2(data: &[Rotation]) -> u64 {
-    let mut pos = 50;
-    let mut count = 0;
-    for rot in data {
-        let rotation = &Rotation(rot.0, 1);
-        for _ in 0..rot.1 {
-            pos = spin(rotation, pos);
-            if pos == 0 {
-                count += 1;
-            }
-        }
-    }
-    count
-}
-
 impl super::Day for Day01 {
     const DAY_NUMBER: usize = 1;
 
@@ -84,11 +11,84 @@ impl super::Day for Day01 {
         }
     }
     fn part1(&self) -> u64 {
-        part1(&self.parsed)
+        u64::from(part1(&self.parsed))
     }
     fn part2(&self) -> u64 {
-        part2(&self.parsed)
+        u64::from(part2(&self.parsed))
     }
+}
+
+enum Dir {
+    L,
+    R,
+}
+
+struct Rotation(Dir, u16);
+
+fn parse(input: &str) -> Vec<Rotation> {
+    input.lines().map(parse_line).collect::<Vec<_>>()
+}
+
+fn parse_line(line: &str) -> Rotation {
+    let mut chars = line.chars();
+    let dir = chars.next().unwrap();
+    let number = chars.as_str().parse::<u16>().unwrap();
+    match dir {
+        'L' => Rotation(Dir::L, number),
+        'R' => Rotation(Dir::R, number),
+        _ => unreachable!(),
+    }
+}
+
+const fn spin(rot: &Rotation, pos: u16) -> (u16, u16) {
+    match rot.0 {
+        Dir::R => {
+            let end_pos = pos + rot.1;
+            (end_pos / 100, end_pos % 100)
+        }
+        Dir::L => {
+            let (rots, extra) = (rot.1 / 100, rot.1 % 100);
+            if extra > pos {
+                (rots + 1, pos + 100 - extra)
+            } else {
+                (rots, pos - extra)
+            }
+        }
+    }
+}
+
+fn part1(data: &[Rotation]) -> u16 {
+    let mut pos = 50;
+    let mut count = 0;
+    for rot in data {
+        // (_, pos) = spin(rot, pos);
+        // if pos == 0 {
+        //     count += 1;
+        // }
+
+        pos += match rot.0 {
+            Dir::R => i32::from(rot.1),
+            Dir::L => -i32::from(rot.1),
+        };
+
+        if (pos % 100) == 0 {
+            count += 1;
+        }
+    }
+
+    count
+}
+
+fn part2(data: &[Rotation]) -> u16 {
+    let mut pos = 50;
+    let mut count = 0;
+    for rot in data {
+        let x;
+        (x, pos) = spin(rot, pos);
+        count += x;
+    }
+
+    count
 }
 
 #[cfg(test)]
@@ -97,10 +97,10 @@ mod test {
 
     #[test]
     fn test_spin() {
-        assert_eq!(spin(&Rotation(Dir::R, 3), 5), 8);
-        assert_eq!(spin(&Rotation(Dir::L, 3), 5), 2);
-        assert_eq!(spin(&Rotation(Dir::L, 10), 5), 95);
-        assert_eq!(spin(&Rotation(Dir::R, 10), 95), 5);
+        assert_eq!(spin(&Rotation(Dir::R, 3), 5), (0, 8));
+        assert_eq!(spin(&Rotation(Dir::L, 3), 5), (0, 2));
+        assert_eq!(spin(&Rotation(Dir::L, 10), 5), (1, 95));
+        assert_eq!(spin(&Rotation(Dir::R, 10), 95), (1, 5));
     }
 
     #[test]
@@ -117,7 +117,7 @@ R14
 L82
 ";
 
-        let (p1, p2) = crate::evaluate_day::<Day01>(&input);
+        let (p1, p2) = crate::evaluate_day::<Day01>(input);
         assert_eq!(p1, 3);
         assert_eq!(p2, 6);
     }
