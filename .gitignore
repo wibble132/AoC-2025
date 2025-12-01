@@ -1,2 +1,4 @@
-inputs/*
+inputs/*.txt
+*/target
+
 */.idea

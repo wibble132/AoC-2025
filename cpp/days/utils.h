@@ -25,7 +25,7 @@ inline auto read_input(uint32_t day) -> std::string
     if (result.empty())
     {
         std::println("Failed to read file at path {}", filePath.string());
-        std::terminate();
+        std::exit(1);
     }
 
     return result;

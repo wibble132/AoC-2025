@@ -11,12 +11,16 @@
         pkgs = import nixpkgs { inherit system overlays; };
       in {
         devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            gcc
+          name = "AoC 2025 C++";
+
+          packages = with pkgs; [
+            gcc15
             cmake
             ninja
           ];
         };
+
+        packages.default = pkgs.callPackage ./default.nix {};
       }
     );
 }

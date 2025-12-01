@@ -22,7 +22,7 @@ day01::Day01::Day01(const std::string& input) noexcept
         if (res.ptr != line_view.end())
         {
             std::println("Day 1: Failed to parse input. Failed at line: \"{}\"", line_view);
-            std::terminate();
+            std::exit(1);
         }
 
         rotations.emplace_back(direction, x);
