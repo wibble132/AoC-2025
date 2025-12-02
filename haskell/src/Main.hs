@@ -8,6 +8,7 @@ import Text.Read (readMaybe)
 import Control.Monad (void)
 
 import Day01 (part1, part2, parseInput)
+import Day02 (part1, part2, parseInput)
 
 main :: IO ()
 main = do
@@ -41,8 +42,9 @@ readInputFile n = readFile fileName
         pad cs = cs
 
         fileName :: FilePath
-        fileName = "../../inputs/day" ++ pad nStr ++ ".txt"
+        fileName = "../inputs/day" ++ pad nStr ++ ".txt"
 
-runDayParts :: Int -> String -> (Int, Int)
-runDayParts 1 s = (Day01.part1 d, Day01.part2 d) where d = Day01.parseInput s
+runDayParts :: Int -> String -> (Integer, Integer)
+runDayParts 1 s = (toInteger $ Day01.part1 d, toInteger $ Day01.part2 d) where d = Day01.parseInput s
+runDayParts 2 s = (Day02.part1 d, Day02.part2 d) where d = Day02.parseInput s
 runDayParts n _ = error $ "Unknown day: " ++ show n

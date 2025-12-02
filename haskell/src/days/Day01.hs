@@ -3,7 +3,7 @@ module Day01 (part1, part2, parseInput) where
 import Data.Maybe (fromJust)
 
 parseInput :: String -> Data
-parseInput = fromJust . fmap Data . sequence . map parseRotation . lines
+parseInput =  Data . fromJust . mapM parseRotation . lines
 
 part1 :: Data -> Int
 part1 = doPart1
@@ -43,11 +43,11 @@ doRun (zeros, pos) (Rotation dir dist) = (zeros + fromEnum isZero, newPos)
       R -> pos - dist
     isZero = (newPos `rem` 100) == 0
 
--- ### Part 1 ###
+-- ### Part 2 ###
 
 doPart2 :: Data -> Int
 doPart2 (Data rotations) = fst $ foldl' doRun (0, 50) rots
   where
     -- Just replate every rotation with `n` rotations of length 1
     rots :: [Rotation]
-    rots = map (\dir -> Rotation dir 1) $ concatMap (\(Rotation dir n) -> replicate n dir) rotations
+    rots = map (`Rotation` 1) $ concatMap (\(Rotation dir n) -> replicate n dir) rotations

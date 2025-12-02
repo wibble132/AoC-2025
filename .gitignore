@@ -1,4 +1,4 @@
 inputs/*.txt
-*/target
+*/result
 
 */.idea
