@@ -7,7 +7,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_executable(cpp main.cpp
         days/day01.cpp
         days/day01.h
-        days/utils.h)
+        days/utils.h
+        days/day03.cpp
+        days/day03.h)
+
 
 set(BIN_DIR ${CMAKE_SOURCE_DIR}/bin)
 add_custom_command(TARGET ${CMAKE_PROJECT_NAME}

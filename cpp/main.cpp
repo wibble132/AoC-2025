@@ -1,4 +1,5 @@
 #include "days/day01.h"
+#include "days/day03.h"
 #include "days/utils.h"
 
 #include <print>
@@ -46,6 +47,9 @@ void runDay(uint32_t n)
     {
     case 1:
         runParts<day01::Day01>(input);
+        break;
+    case 3:
+        runParts<day03::Day03>(input);
         break;
     default:
         std::println("Err: Unknown day {}", n);

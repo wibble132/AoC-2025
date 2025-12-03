@@ -42,7 +42,7 @@ countValids a b = sum . filter (isRepeated 2) $ [a..b]
 
 isRepeated :: Int -> Integer -> Bool
 isRepeated n x
-  | traceShow (x, cks, l `mod` n /= 0, length distincts) False = error ""
+  | traceShow (x, cks, l `mod` n /= 0, length distincts) False = False
   | l `mod` n /= 0 = False
   | otherwise = length distincts == 1
   where
@@ -69,4 +69,4 @@ countValids2 :: Integer -> Integer -> Integer
 countValids2 a b = sum . filter (isAnyRepeated) $ [a..b]
 
 isAnyRepeated :: Integer -> Bool
-isAnyRepeated x = any (== True) $ map (\n -> isRepeated n x) [2..20]
+isAnyRepeated x = any (`isRepeated` x) [2..20]
