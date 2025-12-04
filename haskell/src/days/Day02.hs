@@ -18,7 +18,7 @@ part2 = doPart2
 newtype Data = Data [(Integer, Integer)]
 
 doParse :: Parsec String () Data
-doParse = Data <$> parsePair `sepBy` (char ',')
+doParse = Data <$> parsePair `sepBy` char ','
 
 parsePair :: Parsec String () (Integer, Integer)
 parsePair = do
@@ -42,7 +42,6 @@ countValids a b = sum . filter (isRepeated 2) $ [a..b]
 
 isRepeated :: Int -> Integer -> Bool
 isRepeated n x
-  | traceShow (x, cks, l `mod` n /= 0, length distincts) False = False
   | l `mod` n /= 0 = False
   | otherwise = length distincts == 1
   where
@@ -66,7 +65,7 @@ doPart2 :: Data -> Integer
 doPart2 (Data xs) = sum . map (uncurry countValids2) $ xs
 
 countValids2 :: Integer -> Integer -> Integer
-countValids2 a b = sum . filter (isAnyRepeated) $ [a..b]
+countValids2 a b = sum . filter isAnyRepeated $ [a..b]
 
 isAnyRepeated :: Integer -> Bool
 isAnyRepeated x = any (`isRepeated` x) [2..20]

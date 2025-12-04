@@ -16,4 +16,4 @@ executable aoc-2025
                  ,    parsec
     hs-source-dirs:   src, src/days
     default-language: Haskell2010
-    other-modules:    Day01, Day02
+    other-modules:    Day01, Day02, Day03

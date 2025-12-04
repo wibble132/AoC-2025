@@ -17,7 +17,7 @@
           # The base package set representing a specific GHC version.
           # By default, this is pkgs.haskellPackages.
           # You may also create your own. See https://community.flake.parts/haskell-flake/package-set
-          # basePackages = pkgs.haskellPackages;
+          # basePackages = pkgs.haskell.packages.ghc912;
 
           # Extra package information. See https://community.flake.parts/haskell-flake/dependency
           #
@@ -44,7 +44,7 @@
             # tools = hp: { fourmolu = hp.fourmolu; ghcid = null; };
 
             # Check that haskell-language-server works
-            # hlsCheck.enable = true; # Requires sandbox to be disabled
+            hlsCheck.enable = true; # Requires sandbox to be disabled
           };
         };
 
