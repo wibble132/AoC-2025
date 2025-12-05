@@ -1,17 +1,18 @@
-module Day02 (part1, part2, parseInput) where
+module Day02 (Day02) where
 
 import Text.Parsec (Parsec, parse, char, digit, many, sepBy)
-import Debug.Trace (traceShow)
 import Data.List (nub)
 
-parseInput :: String -> Data
-parseInput = fromRight' . parse doParse ""
+import Base (Day(..), fromRight')
 
-part1 :: Data -> Integer
-part1 = doPart1
+data Day02
+instance Day Day02 where
+    type ParsedData Day02 = Data
 
-part2 :: Data -> Integer
-part2 = doPart2
+    dayNumber = 2
+    parseInput = fromRight' . parse doParse ""
+    part1 = doPart1
+    part2 = doPart2
 
 -- ### Parsing ###
 
@@ -26,11 +27,6 @@ parsePair = do
     _ <- char '-'
     b <- many digit
     pure (read a, read b)
-
-fromRight' :: Show a => Either a b -> b
-fromRight' (Right x) = x
-fromRight' (Left x) = error $ "Failed on fromRight' with " ++ show x
-
 
 -- ### Part 1 ###
 

@@ -1,15 +1,17 @@
-module Day01 (part1, part2, parseInput) where
+module Day01 (Day01) where
 
 import Data.Maybe (fromJust)
 
-parseInput :: String -> Data
-parseInput =  Data . fromJust . mapM parseRotation . lines
+import Base (Day(..))
 
-part1 :: Data -> Int
-part1 = doPart1
+data Day01
+instance Day Day01 where
+    type ParsedData Day01 = Data
 
-part2 :: Data -> Int
-part2 = doPart2
+    dayNumber = 1
+    parseInput = Data . fromJust . mapM parseRotation . lines
+    part1 = toInteger . doPart1
+    part2 = toInteger . doPart2
 
 -- ### Parsing ###
 

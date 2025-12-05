@@ -1,36 +1,38 @@
-module Day03 (part1, part2, parseInput) where
+module Day03 (Day03) where
 
 import Data.List (tails, uncons)
 import Data.Maybe (listToMaybe, isNothing, fromJust, fromMaybe)
 import Data.Ord (comparing)
 
-parseInput :: String -> Data
-parseInput = lines
+import Base (Day(..))
 
-part1 :: Data -> Integer
-part1 = doPart1
+data Day03
+instance Day Day03 where
+    type ParsedData Day03 = Data
 
-part2 :: Data -> Integer
-part2 = doPart2
+    dayNumber = 3
+    parseInput = Data . lines
+    part1 = doPart1
+    part2 = doPart2
 
 -- ### Parsing ###
 
-type Data = [[Char]]
+newtype Data = Data { getData:: [[Char]] }
 
 -- ### Part 1 ###
 
 doPart1 :: Data -> Integer
-doPart1 = sum . map (read . findMax 2)
+doPart1 = sum . map (read . findMax 2) . getData
 
 findMax :: Int -> [Char] -> [Char]
 findMax n ds
  | n == 0 = []
  | len <= n = ds
  | isNothing bestTail = ds
- | otherwise = d : (findMax (n - 1) ds')
+ | otherwise = d : findMax (n - 1) ds'
  where
     len = length ds
-    bestTail = uncons . maximumByLeft (comparing (listToMaybe)) . take (len - n + 1) . tails $ ds
+    bestTail = uncons . maximumByLeft (comparing listToMaybe) . take (len - n + 1) . tails $ ds
     (d, ds') = fromJust bestTail
 
 -- Like Data.List maximumBy, but favours leftwards for ties
@@ -47,4 +49,4 @@ maximumByLeft cmp = fromMaybe (errorWithoutStackTrace "maximumBy: empty structur
 -- ### Part 2 ###
 
 doPart2 :: Data -> Integer
-doPart2 = sum . map (read . findMax 12)
+doPart2 = sum . map (read . findMax 12) . getData

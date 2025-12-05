@@ -1,5 +1,5 @@
-cabal-version:   3.0
-name:            example
+cabal-version:   3.8
+name:            aoc2025
 version:         0.1.0.0
 license:         NONE
 author:          wibble
@@ -7,13 +7,30 @@ maintainer:      wibble132@gmail.com
 build-type:      Simple
 
 common warnings
-    ghc-options: -Wall
+    ghc-options: -Wall -O2
+    default-extensions: TypeFamilies, AllowAmbiguousTypes, ScopedTypeVariables, TypeApplications
 
-executable aoc-2025
+library
     import:           warnings
-    main-is:          Main.hs
     build-depends:    base
                  ,    parsec
-    hs-source-dirs:   src, src/days
+    hs-source-dirs:   src/days
     default-language: Haskell2010
-    other-modules:    Day01, Day02, Day03
+    exposed-modules:  Base,
+                      Day01, Day02, Day03, Day05
+    other-modules:    
+
+executable AoC-2025
+    import:           warnings
+    main-is:          Main.hs
+    build-depends:    base, aoc2025
+    hs-source-dirs:   src
+    default-language: Haskell2010
+
+
+benchmark bench
+    import:           warnings
+    main-is:          Bench.hs
+    build-depends:    base, aoc2025, criterion
+    hs-source-dirs:   src
+    default-language: Haskell2010

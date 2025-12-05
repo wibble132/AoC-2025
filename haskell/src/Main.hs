@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables, TypeApplications#-}
 
 module Main where
 
@@ -6,46 +6,43 @@ import System.Environment (getArgs)
 import Data.Maybe (listToMaybe)
 import Text.Read (readMaybe)
 
-import Day01 (part1, part2, parseInput)
-import Day02 (part1, part2, parseInput)
-import Day03 (part1, part2, parseInput)
+import Base (Day(..), readInputFile)
+import Day01 (Day01)
+import Day02 (Day02)
+import Day03 (Day03)
+import Day05 (Day05)
 
 main :: IO ()
 main = do
     args <- getArgs
     let selectedDay :: Maybe Int = readMaybe =<< listToMaybe args
 
-    maybe allDays runDay selectedDay
+    maybe allDays runDayN selectedDay
 
 allDays :: IO ()
-allDays = mapM_ runDay [1..3]
+allDays = mapM_ runDayN ([1..3] ++ [5])
 
-runDay :: Int -> IO ()
-runDay n = do
-    inputText <- readInputFile n
+runDayN :: Int -> IO ()
+runDayN 1 = runDay @Day01
+runDayN 2 = runDay @Day02
+runDayN 3 = runDay @Day03
+runDayN 5 = runDay @Day05
+runDayN n = error $ "Unknown day: " ++ show n
+
+runDay :: forall a. (Day a) => IO ()
+runDay = do
+    let n = dayNumber @a
+    inputText <- readInputFile @a
 
     putStrLn $ "Day " ++ show n
     putStrLn ""
     
-    let (p1, p2) = runDayParts n inputText
+    let (p1, p2) = (runDayParts @a) inputText
     putStrLn $ "Part 1: " ++ show p1
     putStrLn $ "Part 2: " ++ show p2
     putStrLn ""
 
-readInputFile :: Int -> IO String
-readInputFile n = readFile fileName
-    where
-        nStr = show n
-
-        pad :: String -> String
-        pad [c] = ['0', c]
-        pad cs = cs
-
-        fileName :: FilePath
-        fileName = "../inputs/day" ++ pad nStr ++ ".txt"
-
-runDayParts :: Int -> String -> (Integer, Integer)
-runDayParts 1 s = (toInteger $ Day01.part1 d, toInteger $ Day01.part2 d) where d = Day01.parseInput s
-runDayParts 2 s = (Day02.part1 d, Day02.part2 d) where d = Day02.parseInput s
-runDayParts 3 s = (Day03.part1 d, Day03.part2 d) where d = Day03.parseInput s
-runDayParts n _ = error $ "Unknown day: " ++ show n
+runDayParts :: forall a. (Day a) => String -> (Integer, Integer)
+runDayParts input = (part1 @a parsed, part2 @a parsed)
+  where
+    parsed :: ParsedData a = (parseInput @a) input
