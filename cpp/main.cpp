@@ -10,7 +10,7 @@ void runDay(uint32_t n);
 // TODO: Find why const argv can be const const const const const const const const const con...
 int main(const int argc, const char* const* const argv)
 {
-    if (argc < 2)
+    if (argc != 2)
     {
         std::println("Usage: program <day_number>");
         return 1;

@@ -5,7 +5,7 @@ pub struct Day01 {
 impl super::Day for Day01 {
     const DAY_NUMBER: usize = 1;
 
-    fn parse(input: String) -> Self {
+    fn parse(input: &str) -> Self {
         Self {
             parsed: parse(&input),
         }
@@ -117,7 +117,7 @@ R14
 L82
 ";
 
-        let (p1, p2) = crate::evaluate_day::<Day01>(input.to_string());
+        let (p1, p2) = crate::evaluate_day::<Day01>(input);
         assert_eq!(p1, 3);
         assert_eq!(p2, 6);
     }

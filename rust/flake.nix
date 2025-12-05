@@ -27,8 +27,9 @@
         devShells.default = with pkgs; mkShell {
           buildInputs = [
             rust
-            elf2uf2-rs
           ];
+
+          RUST_SRC_PATH = "${rust.availableComponents.rust-src}/lib/rustlib/src/rust/library";
         };
       }
     );

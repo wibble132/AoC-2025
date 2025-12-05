@@ -2,13 +2,15 @@
 
 mod day01;
 mod day02;
+mod day04;
 
 pub use day01::Day01;
+pub use day04::Day04;
 
 pub trait Day {
     const DAY_NUMBER: usize;
 
-    fn parse(input: String) -> Self;
+    fn parse(input: &str) -> Self;
     fn part1(&self) -> u64;
     fn part2(&self) -> u64;
 }
@@ -18,7 +20,7 @@ pub fn run_day<D: Day>() {
     println!("Running day {number:02}");
 
     let input = read_input_file::<D>();
-    let (p1, p2) = evaluate_day::<D>(input);
+    let (p1, p2) = evaluate_day::<D>(&input);
 
     println!("Part 1: {p1}");
     println!("Part 2: {p2}");
@@ -33,7 +35,7 @@ pub fn read_input_file<D: Day>() -> String {
 }
 
 #[must_use] 
-pub fn evaluate_day<D: Day>(input: String) -> (u64, u64) {
+pub fn evaluate_day<D: Day>(input: &str) -> (u64, u64) {
     let day = D::parse(input);
     let p1 = day.part1();
     let p2 = day.part2();

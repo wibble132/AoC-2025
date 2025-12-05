@@ -11,6 +11,7 @@ add_executable(cpp main.cpp
         days/day03.cpp
         days/day03.h)
 
+target_compile_options(cpp PRIVATE -Wall -Wextra -Wpedantic -Werror -O3)
 
 set(BIN_DIR ${CMAKE_SOURCE_DIR}/bin)
 add_custom_command(TARGET ${CMAKE_PROJECT_NAME}

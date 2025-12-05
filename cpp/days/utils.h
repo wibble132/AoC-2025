@@ -18,7 +18,7 @@ overloaded(Ts...) -> overloaded<Ts...>;
 
 inline auto read_input(uint32_t day) -> std::string
 {
-    const std::filesystem::path filePath{std::format("../../inputs/day{:02}.txt", day)};
+    const std::filesystem::path filePath{std::format("../inputs/day{:02}.txt", day)};
     std::ifstream infile{filePath};
     std::string result =  {std::istreambuf_iterator<char>{infile}, std::istreambuf_iterator<char>{}};
 
