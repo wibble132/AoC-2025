@@ -14,6 +14,7 @@ library
     import:           warnings
     build-depends:    base
                  ,    parsec
+                 ,    containers
     hs-source-dirs:   src/days
     default-language: Haskell2010
     exposed-modules:  Base,
