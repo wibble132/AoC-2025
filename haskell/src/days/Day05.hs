@@ -3,6 +3,8 @@ module Day05 (Day05) where
 
 import Text.Parsec (Parsec, parse, digit, many, many1, newline, char)
 import Data.List (sort)
+import Data.Int (Int64)
+
 import Data.Set (Set)
 import qualified Data.Set as Set
 
@@ -15,12 +17,12 @@ instance Day Day05 where
     dayNumber = 5
     parseInput = fromRight' . parse doParse ""
     part1 = toInteger . doPart1
-    part2 = doPart2
+    part2 = toInteger . doPart2
 
 -- ### Parsing ###
 
-data Data = Data [Range] [Integer]
-data Range = Range Integer Integer
+data Data = Data [Range] [Int64]
+data Range = Range Int64 Int64
   deriving (Eq, Ord, Show)
 
 doParse :: Parsec String () Data
@@ -34,7 +36,7 @@ doParse = do
 parseRange :: Parsec String () Range
 parseRange = (char ('-') >>) . (<$> number) . Range =<< number
 
-number :: Parsec String () Integer
+number :: Parsec String () Int64
 number = do
     digits <- many1 digit
     pure $ read digits
@@ -58,15 +60,15 @@ doPart1 (Data ranges ids) = length . filter isValid $ ids
     rangeSet :: Set Range
     rangeSet = Set.fromDistinctAscList $ contractRanges ranges
 
-    isValid :: Integer -> Bool
+    isValid :: Int64 -> Bool
     isValid i = case Set.lookupLE (Range i i) rangeSet of
         Nothing -> False
         Just (Range _ b) -> b >= i
 
 -- ### Part 2 ###
 
-size :: Range -> Integer
-size (Range a b) = toInteger (b - a + 1)
+size :: Range -> Int64
+size (Range a b) = (b - a + 1)
 
-doPart2 :: Data -> Integer
+doPart2 :: Data -> Int64
 doPart2 (Data ranges _) = sum $ map size $ contractRanges ranges

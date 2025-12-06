@@ -11,6 +11,7 @@ import Day01 (Day01)
 import Day02 (Day02)
 import Day03 (Day03)
 import Day05 (Day05)
+import Day06 (Day06)
 
 main :: IO ()
 main = do
@@ -27,6 +28,7 @@ runDayN 1 = runDay @Day01
 runDayN 2 = runDay @Day02
 runDayN 3 = runDay @Day03
 runDayN 5 = runDay @Day05
+runDayN 6 = runDay @Day06
 runDayN n = error $ "Unknown day: " ++ show n
 
 runDay :: forall a. (Day a) => IO ()
