@@ -1,5 +1,4 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Main where
@@ -11,6 +10,7 @@ import Day02 (Day02)
 import Day03 (Day03)
 import Day05 (Day05)
 import Day06 (Day06)
+import Day07 (Day07)
 import Language.Haskell.TH (Exp, Quote)
 import System.Environment (getArgs)
 import Text.Read (readMaybe)
@@ -31,6 +31,7 @@ runDayN 2 = runDay @Day02
 runDayN 3 = runDay @Day03
 runDayN 5 = runDay @Day05
 runDayN 6 = runDay @Day06
+runDayN 7 = runDay @Day07
 runDayN n = error $ "Unknown day: " ++ show n
 
 runDay :: forall a. (Day a) => IO ()
@@ -50,12 +51,3 @@ runDayParts :: forall a. (Day a) => String -> (Integer, Integer)
 runDayParts input = (part1 @a parsed, part2 @a parsed)
   where
     parsed :: ParsedData a = (parseInput @a) input
-
-oneC :: (Quote m) => m Exp
-oneC = [|1|]
-
-twoC :: (Quote m) => m Exp
-twoC = [|2|]
-
-plusC :: (Quote m) => m Exp
-plusC = [|$oneC + $twoC|]

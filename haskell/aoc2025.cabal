@@ -20,7 +20,7 @@ library
     default-language: Haskell2010
     exposed-modules:  Base,
                       Day01, Day02, Day03, Day05,
-                      Day06
+                      Day06, Day07
     other-modules:    
 
 executable aoc2025
