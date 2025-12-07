@@ -11,7 +11,6 @@ import Day03 (Day03)
 import Day05 (Day05)
 import Day06 (Day06)
 import Day07 (Day07)
-import Language.Haskell.TH (Exp, Quote)
 import System.Environment (getArgs)
 import Text.Read (readMaybe)
 
