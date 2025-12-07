@@ -1,18 +1,24 @@
+{-# LANGUAGE InstanceSigs #-}
+
 module Day02 (Day02) where
 
-import Text.Parsec (Parsec, parse, char, digit, many, sepBy)
+import Base (Day (..), fromRight')
 import Data.List (nub)
-
-import Base (Day(..), fromRight')
+import Text.Parsec (Parsec, char, digit, many, parse, sepBy)
 
 data Day02
-instance Day Day02 where
-    type ParsedData Day02 = Data
 
-    dayNumber = 2
-    parseInput = fromRight' . parse doParse ""
-    part1 = doPart1
-    part2 = doPart2
+instance Day Day02 where
+  type ParsedData Day02 = Data
+
+  dayNumber :: Int
+  dayNumber = 2
+  parseInput :: String -> Data
+  parseInput = fromRight' . parse doParse ""
+  part1 :: Data -> Integer
+  part1 = doPart1
+  part2 :: Data -> Integer
+  part2 = doPart2
 
 -- ### Parsing ###
 
@@ -23,10 +29,10 @@ doParse = Data <$> parsePair `sepBy` char ','
 
 parsePair :: Parsec String () (Integer, Integer)
 parsePair = do
-    a <- many digit
-    _ <- char '-'
-    b <- many digit
-    pure (read a, read b)
+  a <- many digit
+  _ <- char '-'
+  b <- many digit
+  pure (read a, read b)
 
 -- ### Part 1 ###
 
@@ -34,7 +40,7 @@ doPart1 :: Data -> Integer
 doPart1 (Data xs) = sum . map (uncurry countValids) $ xs
 
 countValids :: Integer -> Integer -> Integer
-countValids a b = sum . filter (isRepeated 2) $ [a..b]
+countValids a b = sum . filter (isRepeated 2) $ [a .. b]
 
 isRepeated :: Int -> Integer -> Bool
 isRepeated n x
@@ -61,7 +67,7 @@ doPart2 :: Data -> Integer
 doPart2 (Data xs) = sum . map (uncurry countValids2) $ xs
 
 countValids2 :: Integer -> Integer -> Integer
-countValids2 a b = sum . filter isAnyRepeated $ [a..b]
+countValids2 a b = sum . filter isAnyRepeated $ [a .. b]
 
 isAnyRepeated :: Integer -> Bool
-isAnyRepeated x = any (`isRepeated` x) [2..20]
+isAnyRepeated x = any (`isRepeated` x) [2 .. 20]

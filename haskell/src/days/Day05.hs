@@ -1,51 +1,56 @@
+{-# LANGUAGE InstanceSigs #-}
+
 module Day05 (Day05) where
 
-
-import Text.Parsec (Parsec, parse, digit, many, many1, newline, char)
-import Data.List (sort)
+import Base (Day (..), fromRight')
 import Data.Int (Int64)
-
+import Data.List (sort)
 import Data.Set (Set)
 import qualified Data.Set as Set
-
-import Base (Day(..), fromRight')
+import Text.Parsec (Parsec, char, digit, many, many1, newline, parse)
 
 data Day05
-instance Day Day05 where
-    type ParsedData Day05 = Data
 
-    dayNumber = 5
-    parseInput = fromRight' . parse doParse ""
-    part1 = toInteger . doPart1
-    part2 = toInteger . doPart2
+instance Day Day05 where
+  type ParsedData Day05 = Data
+
+  dayNumber :: Int
+  dayNumber = 5
+  parseInput :: String -> Data
+  parseInput = fromRight' . parse doParse ""
+  part1 :: Data -> Integer
+  part1 = toInteger . doPart1
+  part2 :: Data -> Integer
+  part2 = toInteger . doPart2
 
 -- ### Parsing ###
 
 data Data = Data [Range] [Int64]
+
 data Range = Range Int64 Int64
   deriving (Eq, Ord, Show)
 
 doParse :: Parsec String () Data
 doParse = do
-    ranges <- many (parseRange <* newline)
-    _ <- newline
-    ids <- many (number <* newline)
+  ranges <- many (parseRange <* newline)
+  _ <- newline
+  ids <- many (number <* newline)
 
-    pure $ Data ranges ids
-    
+  pure $ Data ranges ids
+
 parseRange :: Parsec String () Range
 parseRange = (char ('-') >>) . (<$> number) . Range =<< number
 
 number :: Parsec String () Int64
 number = do
-    digits <- many1 digit
-    pure $ read digits
+  digits <- many1 digit
+  pure $ read digits
 
 -- ### Part 1 ###
 
 contractRanges :: [Range] -> [Range]
 contractRanges = doContract . sort
-  where 
+  where
     doContract [] = []
     doContract [r] = [r]
     doContract (r1@(Range a1 b1) : r2@(Range a2 b2) : rs)
@@ -62,8 +67,8 @@ doPart1 (Data ranges ids) = length . filter isValid $ ids
 
     isValid :: Int64 -> Bool
     isValid i = case Set.lookupLE (Range i i) rangeSet of
-        Nothing -> False
-        Just (Range _ b) -> b >= i
+      Nothing -> False
+      Just (Range _ b) -> b >= i
 
 -- ### Part 2 ###
 
