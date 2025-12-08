@@ -3,10 +3,12 @@
 mod day01;
 mod day02;
 mod day04;
+mod day07;
 
 pub use day01::Day01;
 pub use day02::Day02;
 pub use day04::Day04;
+pub use day07::Day07;
 
 pub trait Day {
     const DAY_NUMBER: usize;

@@ -16,6 +16,7 @@ fn run_day_n(day: usize) {
         1 => run_day::<Day01>(),
         2 => run_day::<Day02>(),
         4 => run_day::<Day04>(),
+        7 => run_day::<Day07>(),
         _ => {}
     }
 }

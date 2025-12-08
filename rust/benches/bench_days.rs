@@ -19,5 +19,11 @@ fn bench_day<D: Day>(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, bench_day::<Day01>, bench_day::<Day04>);
+criterion_group!(
+    benches,
+    bench_day::<Day01>,
+    bench_day::<Day02>,
+    bench_day::<Day04>,
+    bench_day::<Day07>,
+);
 criterion_main!(benches);
