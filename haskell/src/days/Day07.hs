@@ -1,8 +1,6 @@
-{-# LANGUAGE InstanceSigs #-}
-
 module Day07 (Day07) where
 
-import Data.List (elemIndex, elemIndices, sort, sortOn, nub, uncons)
+import Data.List (uncons)
 import Data.Maybe (fromJust)
 import Data.Bifunctor (bimap)
 

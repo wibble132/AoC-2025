@@ -8,6 +8,8 @@ import Day03 (Day03)
 import Day05 (Day05)
 import Day06 (Day06)
 import Day07 (Day07)
+import Day08 (Day08)
+import Day09 (Day09)
 
 main :: IO ()
 main = do
@@ -18,7 +20,9 @@ main = do
         benchDay @Day03,
         benchDay @Day05,
         benchDay @Day06,
-        benchDay @Day07
+        benchDay @Day07,
+        benchDay @Day08,
+        benchDay @Day09
       ]
 
   defaultMain days

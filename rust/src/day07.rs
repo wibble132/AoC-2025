@@ -1,3 +1,5 @@
+use std::hint::assert_unchecked;
+
 pub struct Day07 {
     parsed: Data,
 }
@@ -21,10 +23,13 @@ impl super::Day for Day07 {
 struct Data {
     start_pos: usize,
     splitters: Vec<Vec<usize>>,
-    line_length: usize,
 }
 
 fn parse(input: &str) -> Data {
+    for line in input.lines() {
+        assert!(line.len() <= LINE_LEN);
+    }
+
     let (start_line, splitter_lines) = input.split_once('\n').unwrap();
 
     let start_pos = start_line.find('S').unwrap();
@@ -39,22 +44,26 @@ fn parse(input: &str) -> Data {
         })
         .filter(|line: &Vec<usize>| line.len() > 0)
         .collect();
-    let line_length = start_line.len();
 
     Data {
         start_pos,
         splitters,
-        line_length,
     }
 }
 
+const LINE_LEN: usize = 142;
+
 fn part1(data: &Data) -> u64 {
-    let mut beams = vec![false; data.line_length];
+    // Safety: Verified in `parse`
+    unsafe { assert_unchecked(data.start_pos + 2 < LINE_LEN); }
+    let mut beams: [bool; LINE_LEN] = [false; _];
     beams[data.start_pos] = true;
     let mut count = 0;
 
     for line in &data.splitters {
         for splitter in line {
+            // Safety: Verified in `parse`
+            unsafe { assert_unchecked(*splitter + 2 < LINE_LEN); }
             if beams[*splitter] {
                 beams[*splitter - 1] = true;
                 beams[*splitter] = false;
@@ -68,5 +77,22 @@ fn part1(data: &Data) -> u64 {
 }
 
 fn part2(data: &Data) -> u64 {
-    0
+    // Safety: Verified in `parse`
+    unsafe { assert_unchecked(data.start_pos + 2 < LINE_LEN); }
+    let mut counts: [u64; LINE_LEN] = [0; _];
+    counts[data.start_pos] = 1;
+
+    for line in &data.splitters {
+        for splitter in line {
+            // Safety: Verified in `parse`
+            unsafe { assert_unchecked(*splitter + 2 < LINE_LEN); }
+            let in_count = counts[*splitter];
+
+            counts[*splitter - 1] += in_count;
+            counts[*splitter + 1] += in_count;
+            counts[*splitter] = 0;
+        }
+    }
+
+    counts.into_iter().sum()
 }

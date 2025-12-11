@@ -1,0 +1,68 @@
+Build profile: -w ghc-9.10.3 -O2
+In order, the following will be built (use -v for more details):
+ - aoc2025-0.1.0.0 (lib) (file src/days/Day09.hs changed)
+ - aoc2025-0.1.0.0 (exe:aoc2025) (dependency rebuilt)
+Preprocessing library for aoc2025-0.1.0.0...
+Building library for aoc2025-0.1.0.0...
+[9 of 9] Compiling Day09            ( src/days/Day09.hs, dist-newstyle/build/x86_64-linux/ghc-9.10.3/aoc2025-0.1.0.0/opt/build/Day09.o, dist-newstyle/build/x86_64-linux/ghc-9.10.3/aoc2025-0.1.0.0/opt/build/Day09.dyn_o ) [Source file changed]
+src/days/Day09.hs:56:39: warning: [GHC-63394] [-Wx-partial]
+    In the use of ‘head’
+    (imported from Prelude, but defined in GHC.Internal.List):
+    "This is a partial function, it throws an error on empty lists. Use pattern matching, 'Data.List.uncons' or 'Data.Maybe.listToMaybe' instead. Consider refactoring to use "Data.List.NonEmpty"."
+   |
+56 | doPart2 (Data d) = uncurry rectSize . head . filter (traceShowId . isRectInPolygon d . traceShowId) $ [((9,5),(2,3))]
+   |                                       ^^^^
+
+src/days/Day09.hs:58:5: warning: [GHC-40910] [-Wunused-local-binds]
+    Defined but not used: ‘rects’
+   |
+58 |     rects = pairs d
+   |     ^^^^^
+
+src/days/Day09.hs:59:5: warning: [GHC-40910] [-Wunused-local-binds]
+    Defined but not used: ‘sortedRects’
+   |
+59 |     sortedRects = sortOn (negate . uncurry rectSize) rects
+   |     ^^^^^^^^^^^
+
+Preprocessing executable 'aoc2025' for aoc2025-0.1.0.0...
+Building executable 'aoc2025' for aoc2025-0.1.0.0...
+[2 of 2] Linking dist-newstyle/build/x86_64-linux/ghc-9.10.3/aoc2025-0.1.0.0/x/aoc2025/opt/build/aoc2025/aoc2025 [Library changed]
+((9,5),(2,3))
+((2,3),((7,1),(11,1)),False,False,False,False,False)
+((2,3),((11,1),(11,7)),True,False,True,False,False)
+((2,3),((11,7),(9,7)),False,False,False,False,False)
+((2,3),((9,7),(9,5)),False,False,True,False,False)
+((2,3),((9,5),(2,5)),False,False,False,False,False)
+((2,3),((2,5),(2,3)),True,True,True,True,False)
+(2,3,True)
+((x,y), p, isYRange, isBottomYRange, isVert, xIsSame, isLeft)
+((3,3),((7,1),(11,1)), False,False,False,False,False)
+((3,3),((11,1),(11,7)),True, False,True, False,False)
+((3,3),((11,7),(9,7)), False,False,False,False,False)
+((3,3),((9,7),(9,5)),  False,False,True, False,False)
+((3,3),((9,5),(2,5)),  False,False,False,False,False)
+((3,3),((2,5),(2,3)),  True, True, True, False,True )
+((3,3),((2,3),(7,3)),  True, True, False,False,False)
+((3,3),((7,3),(7,1)),  True, False,True, False,False)
+0
+(3,3,False)
+False
+Day 9
+
+Part 1: 50
+aoc2025: Prelude.head: empty list
+CallStack (from HasCallStack):
+  error, called at libraries/ghc-internal/src/GHC/Internal/List.hs:2030:3 in ghc-internal:GHC.Internal.List
+  errorEmptyList, called at libraries/ghc-internal/src/GHC/Internal/List.hs:96:11 in ghc-internal:GHC.Internal.List
+  badHead, called at libraries/ghc-internal/src/GHC/Internal/List.hs:102:48 in ghc-internal:GHC.Internal.List
+  head, called at src/days/Day09.hs:56:39 in aoc2025-0.1.0.0-inplace:Day09
+HasCallStack backtrace:
+  collectBacktraces, called at libraries/ghc-internal/src/GHC/Internal/Exception.hs:169:13 in ghc-internal:GHC.Internal.Exception
+  toExceptionWithBacktrace, called at libraries/ghc-internal/src/GHC/Internal/Exception.hs:204:5 in ghc-internal:GHC.Internal.Exception
+  error, called at libraries/ghc-internal/src/GHC/Internal/List.hs:2030:3 in ghc-internal:GHC.Internal.List
+  errorEmptyList, called at libraries/ghc-internal/src/GHC/Internal/List.hs:96:11 in ghc-internal:GHC.Internal.List
+  badHead, called at libraries/ghc-internal/src/GHC/Internal/List.hs:102:48 in ghc-internal:GHC.Internal.List
+  head, called at src/days/Day09.hs:56:39 in aoc2025-0.1.0.0-inplace:Day09
+
+
