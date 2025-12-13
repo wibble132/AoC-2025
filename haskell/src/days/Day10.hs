@@ -3,8 +3,8 @@
 module Day10 (Day10) where
 
 import Base (Day (..), fromRight', number)
-import Data.List (find, findIndex, sortOn, transpose)
-import Data.Maybe (catMaybes, fromJust, listToMaybe)
+import Data.List (find, findIndex, transpose)
+import Data.Maybe (catMaybes, fromJust, isNothing, listToMaybe)
 import Data.Ratio (denominator, numerator)
 import Data.Set (Set)
 import qualified Data.Set as Set
@@ -99,10 +99,11 @@ doPart2 :: Data -> Int
 doPart2 (Data d) = sum . map solve2 $ d
 
 solve2 :: MachineDescription -> Int
-solve2 (MD _ buttons target) = sum $ solveFromEliminated dim eliminated
+solve2 (MD _ buttons target) = sum $ solveFromEliminated dim2 (maximum target) eliminated
   where
     dim = length target
-    buttonsMatrix = buttonsToMatrix dim (sortOn length buttons)
+    buttonsMatrix = buttonsToMatrix dim buttons
+    dim2 = length . head $ buttonsMatrix
     eliminated :: [(Int, [Rational], Rational)]
     eliminated = gaussianElimination dim buttonsMatrix (map fromIntegral target)
 
@@ -137,8 +138,13 @@ buttonToRow n (x : xs)
   | otherwise = 0 : buttonToRow (n + 1) (x : xs)
 
 gaussianElimination :: Int -> [[Rational]] -> [Rational] -> [(Int, [Rational], Rational)]
-gaussianElimination dim m' r' = valsFromSteps
+gaussianElimination dim m' r' = filter filterEndZeroSteps valsFromSteps
   where
+    filterEndZeroSteps :: (Int, [Rational], Rational) -> Bool
+    filterEndZeroSteps (_, ms, r)
+      | all (== 0) ms = case r of 0 -> False; _ -> error "bad"
+      | otherwise = True
+
     valsFromSteps :: [(Int, [Rational], Rational)]
     valsFromSteps = map f [0 .. (dim - 1)]
       where
@@ -166,10 +172,10 @@ doAddMat mult from to mat = take to mat ++ (addResult : drop (to + 1) mat)
     addResult = zipWith (+) addAmount (mat !! to)
 
 doAddRes :: Rational -> Int -> Int -> [Rational] -> [Rational]
-doAddRes mult from to res = take (to - 1) res ++ (addResult : drop to res)
+doAddRes mult from to res = take to res ++ (addResult : drop (to + 1) res)
   where
-    addAmount = mult * (res !! from)
-    addResult = addAmount + (res !! to)
+    addAmount = mult * res !! from
+    addResult = addAmount + res !! to
 
 actionToTake :: [[Rational]] -> EliminationAction
 actionToTake m
@@ -206,32 +212,38 @@ isUnbounded :: SolveStep -> Bool
 isUnbounded Unbounded = True
 isUnbounded _ = False
 
-solveFromEliminated :: Int -> [(Int, [Rational], Rational)] -> [Int]
-solveFromEliminated dim ms =
+solveFromEliminated :: Int -> Int -> [(Int, [Rational], Rational)] -> [Int]
+solveFromEliminated dim maxResult ms =
   let solvers = map (\(a, m, r) -> (a, getSolver m r)) ms
       solveSteps = map (\i -> maybe Unbounded (Fixed . snd) . find ((== i) . fst) $ solvers) [0 .. dim - 1]
       unboundedCount = length . filter isUnbounded $ solveSteps
 
       -- Try the smallest numbers first!
-      unboundedAttempts = concatMap (itemsSummingTo unboundedCount) [0 ..]
-      solveAttempts = map (attemptSolve solveSteps) unboundedAttempts
-      firstSolve = catMaybes solveAttempts
-   in head firstSolve
+      unboundedAttempts = map (itemsSummingTo unboundedCount) [0 .. maxResult]
+      solveAttempts = map (map (attemptSolve solveSteps)) unboundedAttempts
+      firstSolve = map catMaybes solveAttempts
+   in getSolution firstSolve
   where
     getSolver :: [Rational] -> Rational -> ([Int] -> Maybe Int)
     getSolver matRow result
-      | listToMaybe matRow /= Just 1 = error "eliminated matrix sub row should start with 1"
+      | isNothing (listToMaybe matRow) = error "eliminated matrix sub row is empty"
+      | listToMaybe matRow == Just 0 = error "eliminated matrix sub row starts with zero!"
       | otherwise = f
       where
+        multiplier = head matRow
+
         getTargetValue :: [Int] -> Rational
-        getTargetValue = (result -) . sum . zipWith (*) matRow . map fromIntegral
+        getTargetValue xs | length xs + 1 /= length matRow = error "too few test values?"
+        getTargetValue xs = (/ multiplier) . (result -) . sum . zipWith (*) (tail matRow) . map fromIntegral $ xs
 
         f :: [Int] -> Maybe Int
         f xs = case getTargetValue xs of
-          x | denominator x == 1 && x > 0 -> Just . fromInteger . numerator $ x
+          x | denominator x == 1 && x >= 0 -> Just . fromInteger . numerator $ x
           _ -> Nothing
 
 itemsSummingTo :: Int -> Int -> [[Int]]
+itemsSummingTo x _ | x < 0 = error "Negative input"
+itemsSummingTo 0 _ = [[]]
 itemsSummingTo 1 tot = [[tot]]
 itemsSummingTo itemCount 0 = [replicate itemCount 0]
 itemsSummingTo itemCount tot = concatMap (\i -> map (i :) $ itemsSummingTo (itemCount - 1) (tot - i)) [0 .. tot]
@@ -246,3 +258,27 @@ attemptSolve (Unbounded : steps) (u : us) = case attemptSolve steps us of
 attemptSolve (Fixed f : steps) us = case attemptSolve steps us of
   Nothing -> Nothing
   Just xs -> (: xs) <$> f xs
+
+type Sol = [Int]
+
+-- I wish this could be better
+--  - maybe we could sort the taking of `unbounded` values better?
+--  - the fixed values are still potential issues though...
+
+getSolution :: [[Sol]] -> Sol
+getSolution = doIt 0 Nothing
+  where
+    doIt :: Int -> Maybe Sol -> [[Sol]] -> Sol
+    -- We have a solution and nothing could beat it
+    doIt n (Just best) _ | sum best < n = best
+    -- No more of this length, move on
+    doIt n best ([] : xs) = doIt (n + 1) best xs
+    doIt n Nothing ((s : ss) : xs) = doIt n (Just s) (ss : xs)
+    doIt n (Just sol) ((s : ss) : xs)
+      | s `isBetterThan` sol = doIt n (Just s) (ss : xs)
+      | otherwise = doIt n (Just sol) (ss : xs)
+    doIt _ (Just best) [] = best
+    doIt _ Nothing [] = error "No possible solutions"
+
+    isBetterThan :: Sol -> Sol -> Bool
+    isBetterThan a b = sum a < sum b

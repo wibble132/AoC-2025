@@ -14,6 +14,7 @@ import Day07 (Day07)
 import Day08 (Day08)
 import Day09 (Day09)
 import Day10 (Day10)
+import Day11 (Day11)
 import System.Environment (getArgs)
 import Text.Read (readMaybe)
 
@@ -25,7 +26,7 @@ main = do
   maybe allDays runDayN selectedDay
 
 allDays :: IO ()
-allDays = mapM_ runDayN ([1 .. 3] ++ [5 .. 9])
+allDays = mapM_ runDayN ([1 .. 3] ++ [5 .. 11])
 
 runDayN :: Int -> IO ()
 runDayN 1 = runDay @Day01
@@ -37,6 +38,7 @@ runDayN 7 = runDay @Day07
 runDayN 8 = runDay @Day08
 runDayN 9 = runDay @Day09
 runDayN 10 = runDay @Day10
+runDayN 11 = runDay @Day11
 runDayN n = error $ "Unknown day: " ++ show n
 
 runDay :: forall a. (Day a) => IO ()
