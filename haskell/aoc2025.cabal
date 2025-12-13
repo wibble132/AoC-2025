@@ -17,6 +17,7 @@ library
                  ,    containers
                  ,    split
                  ,    vector
+                 ,    lens
     hs-source-dirs:   src/days
     default-language: Haskell2010
     exposed-modules:  Base,
