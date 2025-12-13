@@ -15,6 +15,7 @@ import Day08 (Day08)
 import Day09 (Day09)
 import Day10 (Day10)
 import Day11 (Day11)
+import Day12 (Day12)
 import System.Environment (getArgs)
 import Text.Read (readMaybe)
 
@@ -39,6 +40,7 @@ runDayN 8 = runDay @Day08
 runDayN 9 = runDay @Day09
 runDayN 10 = runDay @Day10
 runDayN 11 = runDay @Day11
+runDayN 12 = runDay @Day12
 runDayN n = error $ "Unknown day: " ++ show n
 
 runDay :: forall a. (Day a) => IO ()
