@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 
@@ -46,7 +47,7 @@ runDayN n = error $ "Unknown day: " ++ show n
 runDay :: forall a. (Day a) => IO ()
 runDay = do
   let n = dayNumber @a
-  inputText <- readInputFile @a
+  !inputText <- readInputFile @a
 
   putStrLn $ "Day " ++ show n
   putStrLn ""
@@ -59,4 +60,4 @@ runDay = do
 runDayParts :: forall a. (Day a) => String -> (Integer, Integer)
 runDayParts input = (part1 @a parsed, part2 @a parsed)
   where
-    parsed :: ParsedData a = (parseInput @a) input
+    !parsed :: ParsedData a = (parseInput @a) input

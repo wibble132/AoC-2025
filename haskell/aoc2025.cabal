@@ -7,7 +7,7 @@ maintainer:      wibble132@gmail.com
 build-type:      Simple
 
 common warnings
-    ghc-options: -Wall
+    ghc-options: -Wall -fprof-late
     default-extensions: TypeFamilies, AllowAmbiguousTypes, ScopedTypeVariables, TypeApplications, InstanceSigs, TupleSections
 
 library
@@ -18,6 +18,8 @@ library
                  ,    split
                  ,    vector
                  ,    lens
+                 ,    ghc
+                 ,    array
     hs-source-dirs:   src/days
     default-language: Haskell2010
     exposed-modules:  Base,

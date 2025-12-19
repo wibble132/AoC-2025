@@ -1,16 +1,22 @@
+{-# LANGUAGE BangPatterns #-}
 {-# OPTIONS_GHC -Wno-x-partial -Wno-unrecognised-warning-flags #-}
 
 module Day10 (Day10) where
 
 import Base (Day (..), fromRight', number)
 import Control.Lens (element, (.~))
+import Control.Monad.ST (ST)
 import Data.Bifunctor (Bifunctor (first, second))
-import Data.List (find, findIndex, transpose)
-import Data.Maybe (catMaybes, fromJust, isNothing, listToMaybe)
-import Data.Set (Set)
-import qualified Data.Set as Set
+import Data.Bits (Bits (xor), shiftL)
+import Data.List (find, findIndex, sortOn, transpose, uncons)
+import Data.Maybe (catMaybes, fromJust, fromMaybe, isNothing, listToMaybe)
 import Data.Tuple (swap)
-import Text.Parsec (Parsec, char, many, newline, parse, sepBy, space, (<|>))
+import Data.Vector.Mutable (STVector)
+import qualified Data.Vector.Mutable as MVector
+import Data.Word (Word64)
+import GHC.Data.Word64Map.Strict (Word64Map)
+import qualified GHC.Data.Word64Map.Strict as Word64Map
+import Text.Parsec (Parsec, char, many, newline, parse, sepBy, sepEndBy1, (<|>))
 
 data Day10
 
@@ -23,7 +29,7 @@ instance Day Day10 where
   parseInput = fromRight' . parse doParse ""
 
   part1 :: Data -> Integer
-  part1 = const 0 -- toInteger . doPart1
+  part1 = toInteger . doPart1
   part2 :: Data -> Integer
   part2 = toInteger . doPart2
 
@@ -43,14 +49,14 @@ data LightState = On | Off deriving (Show, Eq, Ord)
 type ButtonWiringSchematic = [Int]
 
 doParse :: Parsec String () Data
-doParse = Data <$> many (description <* newline)
+doParse = Data <$> description `sepEndBy1` newline
 
 description :: Parsec String () MachineDescription
 description = do
   _ <- char '['
   lights <- many ((char '.' >> pure Off) <|> (char '#' >> pure On))
   _ <- char ']'
-  _ <- space
+  _ <- char ' '
 
   buttons <- many (char '(' >> (number `sepBy` char ',') <* char ')' <* char ' ')
 
@@ -62,38 +68,46 @@ description = do
 
 -- ### Part 1 ###
 
+type Lights = Word64
+
+type Button = Word64
+
 doPart1 :: Data -> Int
 doPart1 (Data d) = sum . map turnOnMachine $ d
 
-flipLight :: LightState -> LightState
-flipLight On = Off
-flipLight Off = On
+makeLights :: [LightState] -> Lights
+makeLights = foldl' (\x l -> x `shiftL` 1 + case l of On -> 1; Off -> 0) 0
 
-pressButton :: [LightState] -> [Int] -> [LightState]
-pressButton ls' ns' = doPress ls' ns' 0
-  where
-    doPress :: [LightState] -> [Int] -> Int -> [LightState]
-    doPress [] _ _ = []
-    doPress ls [] _ = ls
-    doPress (l : ls) (n : ns) m
-      | m == n = flipLight l : doPress ls ns (m + 1)
-      | otherwise = l : doPress ls (n : ns) (m + 1)
+makeButton :: ButtonWiringSchematic -> Button
+makeButton = sum . map (1 `shiftL`)
+
+pressButton :: Lights -> Button -> Lights
+pressButton = xor
 
 turnOnMachine :: MachineDescription -> Int
-turnOnMachine (MD target buttons _) = searchStep (Set.singleton startLights) [startLights] 0
+turnOnMachine (MD target buttons _) = minimum $ Word64Map.elems middle
   where
-    lightCount = length target
-    startLights = replicate lightCount Off
+    !lightCount = length target
+    !trgtLights = makeLights . reverse $ target
 
-    searchStep :: Set [LightState] -> [[LightState]] -> Int -> Int
-    searchStep visited searchStarts n
-      | target `Set.member` visited = n
-      | otherwise = searchStep nextVisited nextSearchStarts (n + 1)
+    buttonValues :: [Button]
+    buttonValues = map makeButton buttons
+
+    (!leftButtons, !rightButtons) = splitAt (lightCount `div` 2) buttonValues
+    !leftValues = searchAll 0 leftButtons
+    !rightValues = searchAll trgtLights rightButtons
+
+    !middle = Word64Map.intersectionWith (+) leftValues rightValues
+
+    searchAll :: Word64 -> [Button] -> Word64Map Int
+    searchAll n = foldl' goFold (Word64Map.singleton n 0)
       where
-        nextSearchStarts =
-          concatMap (filter (`Set.notMember` visited) . (\s -> map (pressButton s) buttons)) searchStarts
-
-        nextVisited = Set.union visited (Set.fromList nextSearchStarts)
+        goFold :: Word64Map Int -> Button -> Word64Map Int
+        goFold m b =
+          Word64Map.unionWith min m
+            . Word64Map.map (+ 1)
+            . Word64Map.mapKeys (`pressButton` b)
+            $ m
 
 -- ### Part 2 ###
 
@@ -104,13 +118,13 @@ doPart2 :: Data -> Int
 doPart2 (Data d) = sum . map solve2 $ d
 
 solve2 :: MachineDescription -> Int
-solve2 (MD _ buttons target) = sum $ solveFromEliminated dim2 (maximum target) eliminated
+solve2 (MD _ buttons target) = {-# SCC "solve" #-} sum $ solveFromEliminated dim2 (maximum target) eliminated
   where
     dim = length target
-    buttonsMatrix = buttonsToMatrix dim buttons
+    buttonsMatrix = buttonsToMatrix dim (sortOn length buttons)
     dim2 = length . head $ buttonsMatrix
     eliminated :: EliminatedMatrix
-    eliminated = gaussianElimination dim buttonsMatrix (map fromIntegral target)
+    eliminated = {-# SCC "gaussian" #-} gaussianElimination dim buttonsMatrix (map fromIntegral target)
 
 -- So, this can be represented as a Matrix equation
 -- where each button represents a column of a matrix M - e.g. (1,2,5) represents (0,1,1,0,0,1,...)
@@ -263,29 +277,29 @@ isUnbounded _ = False
 
 solveFromEliminated :: Int -> SolutionElement -> EliminatedMatrix -> Solution
 solveFromEliminated dim maxResult ms =
-  let solvers = map (\(a, m, r) -> (a, getSolver m r)) ms
-      solveSteps = map (\i -> maybe Unbounded (Fixed . snd) . find ((== i) . fst) $ solvers) [0 .. dim - 1]
-      unboundedCount = length . filter isUnbounded $ solveSteps
+  let !solvers = map (\(a, m, r) -> (a, getSolver m r)) ms
+      !solveSteps = map (\i -> maybe Unbounded (Fixed . snd) . find ((== i) . fst) $ solvers) [0 .. dim - 1]
+      !unboundedCount = length . filter isUnbounded $ solveSteps
 
-      -- Try the smallest numbers first!
-      unboundedAttempts = map (itemsSummingTo unboundedCount) [0 .. maxResult]
+      !unboundedAttempts = map (itemsSummingTo unboundedCount) [0 .. maxResult]
       solveAttempts = map (map (attemptSolve solveSteps)) unboundedAttempts
       firstSolve = map catMaybes solveAttempts
    in getSolution firstSolve
   where
     -- Given a partial solution with all later elements, get the element fixed by this row
     getSolver :: MatrixRow -> ResultElement -> (Solution -> Maybe SolutionElement)
-    getSolver matRow result
+    getSolver matRow !result
       | isNothing (listToMaybe matRow) = error "eliminated matrix sub row is empty"
       | listToMaybe matRow == Just 0 = error "eliminated matrix sub row starts with zero!"
       | otherwise = f
       where
         multiplier :: Scalar
-        multiplier = head matRow
+        coeffs :: [Scalar]
+        (!multiplier, !coeffs) = fromMaybe (error "Empty matrix row") $ uncons matRow
 
         getTargetValue :: Solution -> (Scalar, Scalar)
-        getTargetValue xs | length xs + 1 /= length matRow = error "too few test values?"
-        getTargetValue xs = (`divMod` multiplier) . (result -) . sum . zipWith (*) (tail matRow) . map fromIntegral $ xs
+        -- getTargetValue xs | length xs + 1 /= length matRow = error "too few test values?"
+        getTargetValue = (`divMod` multiplier) . (result -) . sum . zipWith (*) coeffs
 
         f :: Solution -> Maybe SolutionElement
         f xs = case getTargetValue xs of
@@ -299,6 +313,17 @@ itemsSummingTo 1 tot = [[tot]]
 itemsSummingTo itemCount 0 = [replicate itemCount 0]
 itemsSummingTo itemCount tot = concatMap (\i -> map (i :) $ itemsSummingTo (itemCount - 1) (tot - i)) [0 .. tot]
 
+foo :: STVector s Int -> ST s (STVector s Int)
+foo v = do
+  v' :: STVector s Int <- MVector.generate 10 (* 10)
+
+  x <- MVector.readMaybe v 0
+  case x of
+          0 -> pure ()
+          x -> pure ()
+
+  pure v'
+
 attemptSolve :: [SolveStep] -> [Int] -> Maybe [Int]
 attemptSolve [] [] = Just []
 attemptSolve [] _ = error "Extra unbounded values!"
@@ -310,16 +335,14 @@ attemptSolve (Fixed f : steps) us = case attemptSolve steps us of
   Nothing -> Nothing
   Just xs -> (: xs) <$> f xs
 
-type Sol = [Int]
-
 -- I wish this could be better
 --  - maybe we could sort the taking of `unbounded` values better?
 --  - the fixed values are still potential issues though...
 
-getSolution :: [[Sol]] -> Sol
+getSolution :: [[Solution]] -> Solution
 getSolution = doIt 0 Nothing
   where
-    doIt :: Int -> Maybe Sol -> [[Sol]] -> Sol
+    doIt :: Int -> Maybe Solution -> [[Solution]] -> Solution
     -- We have a solution and nothing could beat it
     doIt n (Just best) _ | sum best < n = best
     -- No more of this length, move on
@@ -331,5 +354,5 @@ getSolution = doIt 0 Nothing
     doIt _ (Just best) [] = best
     doIt _ Nothing [] = error "No possible solutions"
 
-    isBetterThan :: Sol -> Sol -> Bool
+    isBetterThan :: Solution -> Solution -> Bool
     isBetterThan a b = sum a < sum b
