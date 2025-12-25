@@ -1,15 +1,17 @@
-{-# OPTIONS_GHC -Wno-x-partial -Wno-unrecognised-warning-flags #-}
+{-# OPTIONS_GHC -Wno-x-partial #-}
 
 module Day10 (Day10) where
 
 import Base (Day (..), fromRight', number)
 import Control.Lens (element, (.~))
 import Data.Bifunctor (Bifunctor (first, second))
-import Data.List (find, findIndex, transpose)
-import Data.Maybe (catMaybes, fromJust, isNothing, listToMaybe)
+import Data.List (find, transpose)
+import Data.Maybe (catMaybes, fromJust, listToMaybe)
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Tuple (swap)
+import Data.Vector (Vector)
+import qualified Data.Vector as V
 import Text.Parsec (Parsec, char, many, newline, parse, sepBy, space, (<|>))
 
 data Day10
@@ -23,7 +25,7 @@ instance Day Day10 where
   parseInput = fromRight' . parse doParse ""
 
   part1 :: Data -> Integer
-  part1 = const 0 -- toInteger . doPart1
+  part1 = const 0 . toInteger . doPart1
   part2 :: Data -> Integer
   part2 = toInteger . doPart2
 
@@ -108,9 +110,9 @@ solve2 (MD _ buttons target) = sum $ solveFromEliminated dim2 (maximum target) e
   where
     dim = length target
     buttonsMatrix = buttonsToMatrix dim buttons
-    dim2 = length . head $ buttonsMatrix
+    dim2 = length . V.head $ buttonsMatrix
     eliminated :: EliminatedMatrix
-    eliminated = gaussianElimination dim buttonsMatrix (map fromIntegral target)
+    eliminated = gaussianElimination dim buttonsMatrix (V.fromList $ map fromIntegral target)
 
 -- So, this can be represented as a Matrix equation
 -- where each button represents a column of a matrix M - e.g. (1,2,5) represents (0,1,1,0,0,1,...)
@@ -135,13 +137,13 @@ type Scalar = Int
 
 type MatrixElement = Scalar
 
-type MatrixRow = [MatrixElement]
+type MatrixRow = Vector MatrixElement
 
-type Matrix = [MatrixRow]
+type Matrix = Vector MatrixRow
 
 type ResultElement = Scalar
 
-type ResultVec = [ResultElement]
+type ResultVec = Vector ResultElement
 
 type RowOffset = Int
 
@@ -152,7 +154,7 @@ type EliminatedMatrixRow = (RowOffset, MatrixRow, ResultElement)
 type EliminatedMatrix = [EliminatedMatrixRow]
 
 buttonsToMatrix :: Int -> [ButtonWiringSchematic] -> Matrix
-buttonsToMatrix buttonCount = transpose . map (take buttonCount . map fromIntegral . buttonToRow 0)
+buttonsToMatrix buttonCount = V.fromList . map V.fromList . transpose . map (take buttonCount . map fromIntegral . buttonToRow 0)
 
 buttonToRow :: Int -> [Int] -> [Int]
 buttonToRow _ [] = repeat 0
@@ -172,37 +174,40 @@ gaussianElimination dim m' r' = filter filterEndZeroSteps valsFromSteps
     valsFromSteps = map f [0 .. (dim - 1)]
       where
         f :: RowIndex -> EliminatedMatrixRow
-        f n = (\(a, b, m, r) -> (b, m !! (n - a), r !! (n - a))) $ last (filter (\(a, _, _, _) -> a <= n) steps)
+        f n = (\(a, b, m, r) -> (b, m V.! (n - a), r V.! (n - a))) . last . filter (\(a, _, _, _) -> a <= n) $ steps
 
-    steps :: [(RowIndex, RowOffset, [[MatrixElement]], [ResultElement])]
+    steps :: [(RowIndex, RowOffset, Matrix, ResultVec)]
     steps = takeWhile (\(_, _, m, _) -> not (any null m) && not (null m)) $ iterate doStep (0, 0, m', r')
 
-    doStep :: (RowIndex, RowOffset, [[MatrixElement]], [ResultElement]) -> (RowIndex, RowOffset, [[MatrixElement]], [ResultElement])
+    doStep :: (RowIndex, RowOffset, Matrix, ResultVec) -> (RowIndex, RowOffset, Matrix, ResultVec)
     doStep (a, b, m, r) = case actionToTake m of
-      Unconstrained -> (a, b + 1, map tail m, r)
-      Continue -> (a + 1, b + 1, tail $ map tail m, tail r)
-      Swap swapIndex -> (a, b, doSwap swapIndex m, doSwap swapIndex r)
+      Unconstrained -> (a, b + 1, V.map V.tail m, r)
+      Continue -> (a + 1, b + 1, V.tail $ V.map V.tail m, V.tail r)
+      Swap swapIndex -> (a, b, doSwapVec swapIndex m, doSwapVec swapIndex r)
       Resolve n1 n2 idx -> uncurry (a,b,,) $ doResolve n1 n2 idx m r
 
 doSwap :: RowIndex -> [a] -> [a]
 doSwap _ [] = error "Failed to swap"
 doSwap n (x : xs) = (xs !! (n - 1)) : (take (n - 1) xs ++ (x : drop n xs))
 
-doResolve :: Scalar -> Scalar -> RowIndex -> [[MatrixElement]] -> [ResultElement] -> ([[MatrixElement]], [ResultElement])
+doSwapVec :: RowIndex -> Vector a -> Vector a
+doSwapVec n = V.fromList . doSwap n . V.toList
+
+doResolve :: Scalar -> Scalar -> RowIndex -> Matrix -> ResultVec -> (Matrix, ResultVec)
 doResolve n1 n2 idx mat r
-  | head row0 /= g = error "Invalid First element"
-  | head rowi /= 0 = error "Row i should start with 0"
+  | V.head row0 /= g = error "Invalid First element"
+  | V.head rowi /= 0 = error "Row i should start with 0"
   | otherwise = (mat', r')
   where
     (g, (a, b)) = egcd n1 n2
     -- Want first row to be (a * (row 0) + b * (row idx)) (should start with `g`)
-    row0 = zipWith (\r0 ri -> a * r0 + b * ri) (head mat) (mat !! idx)
-    res0 = a * head r + b * (r !! idx)
+    row0 = V.zipWith (\r0 ri -> a * r0 + b * ri) (V.head mat) (mat V.! idx)
+    res0 = a * V.head r + b * (r V.! idx)
 
     -- And then change row i to have the first digit 0
     d = (n1 + n2) `div` g
-    rowi = zipWith3 (\r0 ri r0' -> (r0 + ri) - d * r0') (head mat) (mat !! idx) row0
-    resi = head r + (r !! idx) - d * res0
+    rowi = V.zipWith3 (\r0 ri r0' -> (r0 + ri) - d * r0') (V.head mat) (mat V.! idx) row0
+    resi = V.head r + (r V.! idx) - d * res0
 
     mat' = (element idx .~ rowi) . (element 0 .~ row0) $ mat
     r' = (element idx .~ resi) . (element 0 .~ res0) $ r
@@ -212,16 +217,16 @@ actionToTake m
   -- The first column is all zero
   | all (== 0) column = Unconstrained
   -- Top left nonzero, rest of column is zero
-  | topLeft /= 0 && all (== 0) (tail column) = Continue
+  | topLeft /= 0 && all (== 0) (V.tail column) = Continue
   -- Top left is 0, swap with first non-zero
   | topLeft == 0 = Swap firstNonZeroIndex
   -- Top left nonzero, another nonzero
   | otherwise = Resolve topLeft firstNonZero firstNonZeroIndex
   where
-    column = map head m
-    topLeft = head column
-    firstNonZeroIndex = (+ 1) . fromJust . findIndex (/= 0) . tail $ column
-    firstNonZero = column !! firstNonZeroIndex
+    column = V.map V.head m
+    topLeft = V.head column
+    firstNonZeroIndex = (+ 1) . fromJust . V.findIndex (/= 0) . V.tail $ column
+    firstNonZero = column V.! firstNonZeroIndex
 
 egcd :: (Integral a, Show a) => a -> a -> (a, (a, a))
 egcd x y
@@ -251,7 +256,7 @@ data EliminationAction
 
 type SolutionElement = Int
 
-type Solution = [SolutionElement]
+type Solution = Vector SolutionElement
 
 data SolveStep
   = Unbounded
@@ -276,16 +281,16 @@ solveFromEliminated dim maxResult ms =
     -- Given a partial solution with all later elements, get the element fixed by this row
     getSolver :: MatrixRow -> ResultElement -> (Solution -> Maybe SolutionElement)
     getSolver matRow result
-      | isNothing (listToMaybe matRow) = error "eliminated matrix sub row is empty"
-      | listToMaybe matRow == Just 0 = error "eliminated matrix sub row starts with zero!"
+      | V.null matRow = error "eliminated matrix sub row is empty"
+      | V.head matRow == 0 = error "eliminated matrix sub row starts with zero!"
       | otherwise = f
       where
         multiplier :: Scalar
-        multiplier = head matRow
+        multiplier = V.head matRow
 
         getTargetValue :: Solution -> (Scalar, Scalar)
         getTargetValue xs | length xs + 1 /= length matRow = error "too few test values?"
-        getTargetValue xs = (`divMod` multiplier) . (result -) . sum . zipWith (*) (tail matRow) . map fromIntegral $ xs
+        getTargetValue xs = (`divMod` multiplier) . (result -) . sum . V.zipWith (*) (V.tail matRow) . V.map fromIntegral $ xs
 
         f :: Solution -> Maybe SolutionElement
         f xs = case getTargetValue xs of
@@ -299,27 +304,38 @@ itemsSummingTo 1 tot = [[tot]]
 itemsSummingTo itemCount 0 = [replicate itemCount 0]
 itemsSummingTo itemCount tot = concatMap (\i -> map (i :) $ itemsSummingTo (itemCount - 1) (tot - i)) [0 .. tot]
 
-attemptSolve :: [SolveStep] -> [Int] -> Maybe [Int]
-attemptSolve [] [] = Just []
+attemptSolve :: [SolveStep] -> [Int] -> Maybe Solution
+attemptSolve [] [] = Just V.empty
 attemptSolve [] _ = error "Extra unbounded values!"
 attemptSolve (Unbounded : _) [] = error "Missing unbounded steps!"
-attemptSolve (Unbounded : steps) (u : us) = case attemptSolve steps us of
-  Nothing -> Nothing
-  Just xs -> Just (u : xs)
-attemptSolve (Fixed f : steps) us = case attemptSolve steps us of
-  Nothing -> Nothing
-  Just xs -> (: xs) <$> f xs
+-- attemptSolve (Unbounded : steps) (u : us) = case attemptSolve steps us of
+--   Nothing -> Nothing
+--   Just xs -> Just (u : xs)
+-- attemptSolve (Fixed f : steps) us = case attemptSolve steps us of
+--   Nothing -> Nothing
+--   Just xs -> (: xs) <$> f xs
+attemptSolve (s : steps) unboundedVals = do
+  unboundedTail <- case s of
+     Unbounded -> pure $ drop 1 unboundedVals
+     Fixed _ -> pure unboundedVals
 
-type Sol = [Int]
+  tailVals <- attemptSolve steps unboundedTail
+  nextVal <- doAttemptSolveStep s (listToMaybe unboundedVals) tailVals
+  pure $ V.cons nextVal tailVals
+
+doAttemptSolveStep :: SolveStep -> Maybe Int -> Solution -> Maybe Int
+doAttemptSolveStep Unbounded Nothing _ = error "Missing unbounded value"
+doAttemptSolveStep Unbounded (Just ub) _ = Just ub
+doAttemptSolveStep (Fixed f) _ soln = f soln
 
 -- I wish this could be better
 --  - maybe we could sort the taking of `unbounded` values better?
 --  - the fixed values are still potential issues though...
 
-getSolution :: [[Sol]] -> Sol
+getSolution :: [[Solution]] -> Solution
 getSolution = doIt 0 Nothing
   where
-    doIt :: Int -> Maybe Sol -> [[Sol]] -> Sol
+    doIt :: Int -> Maybe Solution -> [[Solution]] -> Solution
     -- We have a solution and nothing could beat it
     doIt n (Just best) _ | sum best < n = best
     -- No more of this length, move on
@@ -331,5 +347,5 @@ getSolution = doIt 0 Nothing
     doIt _ (Just best) [] = best
     doIt _ Nothing [] = error "No possible solutions"
 
-    isBetterThan :: Sol -> Sol -> Bool
+    isBetterThan :: Solution -> Solution -> Bool
     isBetterThan a b = sum a < sum b
